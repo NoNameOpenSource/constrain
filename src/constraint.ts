@@ -23,4 +23,5 @@ export enum Unit {
     PIXEL = "px",
     PERCENT = "%",
     EM = "em",
+    REM = "rem",
 }
