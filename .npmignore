@@ -1,0 +1,10 @@
+src
+.vscode
+.github
+.gitignore
+tsconfig.json
+dist/demo.js
+.eslintrc.yml
+.eslintignore
+types
+
