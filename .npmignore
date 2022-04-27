@@ -1,8 +1,8 @@
-src
-.vscode
+.eslintignore
+.eslintrc.yml
 .github
 .gitignore
+.prettierrc.yml
+.vscode
+src
 tsconfig.json
-.eslintrc.yml
-.eslintignore
-
