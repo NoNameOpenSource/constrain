@@ -1,6 +1,6 @@
 import { ConstraintTarget } from "./constraint-target";
 
-export class Constraint {
+export interface Constraint {
     from: ConstraintTarget;
     to?: ConstraintTarget;
     type: ConstraintType;
