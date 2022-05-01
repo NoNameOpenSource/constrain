@@ -30,16 +30,21 @@ export function compute(obj: Parent) {
         }
     }
 
+    const promises = [];
+
     for (const child of children) {
         if (child.requiresUpdate) {
-            child.update({
+            const promise = child.update({
                 x: child.x,
                 y: child.y,
                 width: child.width,
                 height: child.height,
             });
+            promises.push(promise);
         }
     }
+
+    return Promise.allSettled(promises);
 }
 
 /**
