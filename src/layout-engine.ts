@@ -1,7 +1,7 @@
 import { Constraint } from "./constraint";
-import { DrawableObject, Parent } from "./drawable-object";
+import { DrawableObject } from "./drawable-object";
 
-export function compute(obj: Parent) {
+export function compute(obj: DrawableObject) {
     if (obj.children.length < 1) {
         return;
     }
@@ -57,6 +57,7 @@ export function computeOrder(set: ConstraintGroup) {
     const newSet: ConstraintGroup = {
         constraints,
         dirty: false,
+        tree: undefined,
     };
     return newSet;
 }
@@ -64,4 +65,5 @@ export function computeOrder(set: ConstraintGroup) {
 export interface ConstraintGroup {
     constraints: Constraint[];
     dirty: boolean;
+    tree: any;
 }

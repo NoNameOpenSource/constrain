@@ -1,7 +1,7 @@
-import { Parent } from "./drawable-object";
+import { DrawableObject } from "./drawable-object";
 import { PropertyType } from "./property-type";
 
 export interface ConstraintTarget {
-    object: Parent;
+    object: DrawableObject;
     propertyType: PropertyType;
 }
