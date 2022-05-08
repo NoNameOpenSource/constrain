@@ -3,4 +3,6 @@ export enum PropertyType {
     RIGHT = "right",
     BOTTOM = "bottom",
     LEFT = "left",
+    WIDTH = "width",
+    HEIGHT = "height",
 }
