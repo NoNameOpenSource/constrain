@@ -2,7 +2,7 @@
     "extends": "@tsconfig/node16/tsconfig.json",
     "compileOnSave": true,
     "compilerOptions": {
-        "lib": ["es2021"],
+        "lib": ["es2021", "dom"],
         "esModuleInterop": true,
         "checkJs": false,
         "allowJs": false,
