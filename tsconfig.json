@@ -13,7 +13,8 @@
         "outDir": "dist",
         "declaration": true,
         "declarationDir": "types",
-        "removeComments": false
+        "removeComments": false,
+        "sourceMap": true
     },
     "include": ["src"]
 }

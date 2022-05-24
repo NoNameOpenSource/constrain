@@ -13,11 +13,14 @@ export function compute(obj: DrawableObject) {
 
     const children: Child[] = [];
 
-    const rootNode = obj.constraintGroup.tree;
-    rootNode.one;
-
     // TODO: compute all of the constraints instead of just copying the existing values
     // TODO: only set requiresUpdate to true if x, y, width, or height has changed
+
+    // for (const constraint of obj.constraintGroup.constraintsInOrder) {
+    // convert constraints to x, y, width, height for each child
+    // const child = obj.children[constraint.from.object.id];
+
+    // }
 
     for (const child of obj.children) {
         children.push({
@@ -103,7 +106,9 @@ export class ConstraintGroup {
     }
 
     computeOrder() {
-        // compute the order
+        // generate the list of all objects that we are interacting with
+
+        // temporarily add owner
         const objs: DrawableObject[] = [this.owner];
 
         for (const constraint of this.constraints) {
@@ -123,7 +128,20 @@ export class ConstraintGroup {
 
         const constraints: PossiblyUsedConstraint[] = [];
 
-        // double constraint when there is a "to" DrawableObject
+        for (const constraint of this.constraints) {
+            constraints.push({
+                used: false,
+                constraint,
+            });
+        }
+
+        /* not using this
+
+        const constraints: PossiblyUsedConstraint[] = [];
+
+        // for a constraint with a "to", create another constraint with the opposite direction
+        // because the direction does not matter in the input but it matters when computing
+
         for (const constraint of this.constraints) {
             constraints.push({
                 used: false,
@@ -140,25 +158,28 @@ export class ConstraintGroup {
                 },
             });
         }
+        */
+
+        // maintain function purity by creating an array of mocks with some extra properties
 
         const mocks: DrawableMock[] = [];
 
         for (const obj of objs) {
             // find constraints for this obj
             const constraintsWithObject = constraints.filter((constraint) => constraint.constraint.from.object === obj);
-            constraints.push(...constraintsWithObject);
 
             mocks.push({
                 x: false,
                 y: false,
-                constraints,
+                constraints: constraintsWithObject,
             });
         }
 
+        // actually order the constraints
+
         const constsInOrder: Constraint[] = [];
 
-        // eslint-disable-next-line @typescript-eslint/prefer-for-of
-        for (let i = 0; i < mocks.length; i++) {
+        for (const _unused of mocks) {
             for (const mock of mocks) {
                 // compute x coord
 
@@ -167,7 +188,7 @@ export class ConstraintGroup {
                 for (const cons of mock.constraints) {
                     if (!cons.constraint.to) continue;
 
-                    const xCoordTypes = [PropertyType.LEFT, PropertyType.RIGHT];
+                    const xCoordTypes = getXCoordTypes();
                     if (!xCoordTypes.includes(cons.constraint.from.propertyType)) continue;
 
                     // check if there is a target
@@ -184,7 +205,7 @@ export class ConstraintGroup {
                     }
                 }
 
-                if (allClear) {
+                if (allClear && !mock.x) {
                     //TODO:
                     // check if we can compute this
                     // or it is conflicting or ambiguous ( + need ordering)
@@ -192,6 +213,9 @@ export class ConstraintGroup {
                     mock.x = true;
                     for (const cons of mock.constraints) {
                         // copy the constraints
+                        const xCoordTypes = getXCoordTypes();
+                        if (!xCoordTypes.includes(cons.constraint.from.propertyType)) continue;
+
                         constsInOrder.push({
                             from: cons.constraint.from,
                             to: cons.constraint.to,
@@ -208,7 +232,7 @@ export class ConstraintGroup {
                 for (const cons of mock.constraints) {
                     if (!cons.constraint.to) continue;
 
-                    const yCoordTypes = [PropertyType.TOP, PropertyType.BOTTOM];
+                    const yCoordTypes = getYCoordTypes();
                     if (!yCoordTypes.includes(cons.constraint.from.propertyType)) continue;
 
                     // find mock of the object
@@ -221,13 +245,15 @@ export class ConstraintGroup {
                     }
                 }
 
-                if (allClear) {
+                if (allClear && !mock.y) {
                     //TODO:
                     // check if we can compute this
                     // or it is conflicting or ambiguous ( + need ordering)
 
                     mock.y = true;
                     for (const cons of mock.constraints) {
+                        const yCoordTypes = getYCoordTypes();
+                        if (!yCoordTypes.includes(cons.constraint.from.propertyType)) continue;
                         // copy the constraints
                         constsInOrder.push({
                             from: cons.constraint.from,
@@ -262,4 +288,12 @@ interface Node {
 interface PossiblyUsedConstraint {
     used: boolean;
     constraint: Constraint;
+}
+
+function getXCoordTypes() {
+    return [PropertyType.LEFT, PropertyType.RIGHT, PropertyType.WIDTH];
+}
+
+function getYCoordTypes() {
+    return [PropertyType.TOP, PropertyType.BOTTOM, PropertyType.HEIGHT];
 }

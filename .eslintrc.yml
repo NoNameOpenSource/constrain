@@ -1,2 +1,4 @@
 extends:
   - "@nonameopensource/eslint-config-typescript"
+rules:
+  "node/prefer-global/console": "off"

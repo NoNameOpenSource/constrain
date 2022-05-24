@@ -1,4 +1,3 @@
-import console from "console";
 import "source-map-support/register";
 import { Constraint, ConstraintType, Unit } from "../constraint";
 import { DrawableObject } from "../drawable-object";
@@ -83,11 +82,11 @@ const constraints: Constraint[] = [
     },
     {
         from: {
-            object: objects[1],
+            object: objects[2],
             propertyType: PropertyType.HEIGHT,
         },
         to: {
-            object: objects[2],
+            object: objects[1],
             propertyType: PropertyType.HEIGHT,
         },
         type: ConstraintType.EQUAL,
@@ -95,11 +94,11 @@ const constraints: Constraint[] = [
     },
     {
         from: {
-            object: objects[1],
+            object: objects[2],
             propertyType: PropertyType.WIDTH,
         },
         to: {
-            object: objects[2],
+            object: objects[1],
             propertyType: PropertyType.WIDTH,
         },
         type: ConstraintType.EQUAL,
@@ -123,11 +122,11 @@ const constraints: Constraint[] = [
     {
         from: {
             object: objects[2],
-            propertyType: PropertyType.HEIGHT,
+            propertyType: PropertyType.TOP,
         },
         to: {
             object: objects[1],
-            propertyType: PropertyType.HEIGHT,
+            propertyType: PropertyType.TOP,
         },
         type: ConstraintType.EQUAL,
         amount: {
@@ -144,3 +143,4 @@ constraintGroup.addConstraints(constraints);
 constraintGroup.computeOrder();
 
 console.log(JSON.stringify(constraintGroup.constraintsInOrder, null, 2));
+console.log("constraints in order length", constraintGroup.constraintsInOrder.length);
