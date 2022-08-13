@@ -280,7 +280,8 @@ export class ConstraintGroup {
             let value: number;
             if (!constraint.to) {
                 // TODO: check unit
-                value = constraint.amount.value;
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+                value = constraint.amount!.value;
             } else {
                 const to = constraint.to;
                 switch (to.propertyType) {
@@ -303,7 +304,7 @@ export class ConstraintGroup {
                         value = to.object.y + to.object.height;
                         break;
                 }
-                value += constraint.amount.value;
+                if (constraint.amount) value += constraint.amount.value;
             }
             if (constraint.from.propertyType === PropertyType.WIDTH) {
                 if (constraint.type === ConstraintType.EQUAL) {

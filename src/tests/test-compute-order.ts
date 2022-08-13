@@ -31,101 +31,107 @@ const owner = new DrawableObjectMock();
 
 const objects: DrawableObject[] = [new DrawableObjectMock(), new DrawableObjectMock()];
 
+const TOP = 10;
+const LEFT = 20;
+const WIDTH = 100;
+const HEIGHT = 200;
+const HORIZONTAL_MARGIN = 50;
+
 const constraints: Constraint[] = [
     {
         from: {
-            object: objects[1],
+            object: objects[0],
             propertyType: PropertyType.TOP,
         },
-        to: null,
+        to: undefined,
         type: ConstraintType.EQUAL,
         amount: {
-            value: 100,
+            value: TOP,
             unit: Unit.PIXEL,
         },
+    },
+    {
+        from: {
+            object: objects[0],
+            propertyType: PropertyType.LEFT,
+        },
+        to: undefined,
+        type: ConstraintType.EQUAL,
+        amount: {
+            value: LEFT,
+            unit: Unit.PIXEL,
+        },
+    },
+    {
+        from: {
+            object: objects[0],
+            propertyType: PropertyType.WIDTH,
+        },
+        to: undefined,
+        type: ConstraintType.EQUAL,
+        amount: {
+            value: WIDTH,
+            unit: Unit.PIXEL,
+        },
+    },
+    {
+        from: {
+            object: objects[0],
+            propertyType: PropertyType.HEIGHT,
+        },
+        to: undefined,
+        type: ConstraintType.EQUAL,
+        amount: {
+            value: HEIGHT,
+            unit: Unit.PIXEL,
+        },
+    },
+    {
+        from: {
+            object: objects[1],
+            propertyType: PropertyType.HEIGHT,
+        },
+        to: {
+            object: objects[0],
+            propertyType: PropertyType.HEIGHT,
+        },
+        type: ConstraintType.EQUAL,
+        amount: undefined,
+    },
+    {
+        from: {
+            object: objects[1],
+            propertyType: PropertyType.WIDTH,
+        },
+        to: {
+            object: objects[0],
+            propertyType: PropertyType.WIDTH,
+        },
+        type: ConstraintType.EQUAL,
+        amount: undefined,
     },
     {
         from: {
             object: objects[1],
             propertyType: PropertyType.LEFT,
         },
-        to: null,
-        type: ConstraintType.EQUAL,
-        amount: {
-            value: 100,
-            unit: Unit.PIXEL,
-        },
-    },
-    {
-        from: {
-            object: objects[1],
-            propertyType: PropertyType.WIDTH,
-        },
-        to: null,
-        type: ConstraintType.EQUAL,
-        amount: {
-            value: 100,
-            unit: Unit.PIXEL,
-        },
-    },
-    {
-        from: {
-            object: objects[1],
-            propertyType: PropertyType.HEIGHT,
-        },
-        to: null,
-        type: ConstraintType.EQUAL,
-        amount: {
-            value: 100,
-            unit: Unit.PIXEL,
-        },
-    },
-    {
-        from: {
-            object: objects[2],
-            propertyType: PropertyType.HEIGHT,
-        },
         to: {
-            object: objects[1],
-            propertyType: PropertyType.HEIGHT,
-        },
-        type: ConstraintType.EQUAL,
-        amount: null,
-    },
-    {
-        from: {
-            object: objects[2],
-            propertyType: PropertyType.WIDTH,
-        },
-        to: {
-            object: objects[1],
-            propertyType: PropertyType.WIDTH,
-        },
-        type: ConstraintType.EQUAL,
-        amount: null,
-    },
-    {
-        from: {
-            object: objects[2],
-            propertyType: PropertyType.LEFT,
-        },
-        to: {
-            object: objects[1],
+            object: objects[0],
             propertyType: PropertyType.RIGHT,
         },
         type: ConstraintType.EQUAL,
         amount: {
-            value: 50,
+            value: HORIZONTAL_MARGIN,
             unit: Unit.PIXEL,
         },
     },
     {
         from: {
-            object: objects[2],
+            object: objects[1],
             propertyType: PropertyType.TOP,
         },
         to: {
-            object: objects[1],
+            object: objects[0],
             propertyType: PropertyType.TOP,
         },
         type: ConstraintType.EQUAL,
@@ -142,5 +148,41 @@ constraintGroup.addConstraints(constraints);
 
 constraintGroup.computeOrder();
 
-console.log(JSON.stringify(constraintGroup.constraintsInOrder, null, 2));
-console.log("constraints in order length", constraintGroup.constraintsInOrder.length);
+// console.log(JSON.stringify(constraintGroup.constraintsInOrder, null, 2));
+// console.log("constraints in order length", constraintGroup.constraintsInOrder.length);
+
+constraintGroup.compute();
+
+if (objects[0].x !== LEFT) {
+    throw new Error("Object 0 x is incorrect");
+}
+
+if (objects[0].y !== TOP) {
+    throw new Error("Object 0 y is incorrect");
+}
+
+if (objects[0].width !== WIDTH) {
+    throw new Error("Object 0 width is incorrect");
+}
+
+if (objects[0].height !== HEIGHT) {
+    throw new Error("Object 0 height width is incorrect");
+}
+
+if (objects[1].width !== WIDTH) {
+    throw new Error("Object 1 width is incorrect");
+}
+
+if (objects[1].height !== HEIGHT) {
+    throw new Error("Object 1 height width is incorrect");
+}
+
+if (objects[1].x !== LEFT + WIDTH + HORIZONTAL_MARGIN) {
+    throw new Error("Object 1 x is incorrect");
+}
+
+if (objects[1].y !== TOP) {
+    throw new Error("Object 1 y is incorrect");
+}
+
+console.log("All test passed!");
