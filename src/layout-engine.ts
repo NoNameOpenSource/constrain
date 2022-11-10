@@ -86,10 +86,14 @@ export class ConstraintGroup {
     constraints: Constraint[];
     constraintsInOrder: Constraint[];
     dirty: boolean;
-    tree: Node;
+    tree: Node | undefined;
 
-    constructor(constraints: Constraint[]) {
+    constructor(owner: DrawableObject, constraints: Constraint[]) {
+        this.owner = owner;
         this.constraints = constraints;
+        this.constraintsInOrder = [];
+        this.dirty = true;
+        this.tree = undefined;
 
         // compute the order
         this.computeOrder();
@@ -216,7 +220,7 @@ export class ConstraintGroup {
                             from: cons.constraint.from,
                             to: cons.constraint.to,
                             type: cons.constraint.type,
-                            amount: cons.constraint.amount,
+                            operators: cons.constraint.operators,
                         });
                     }
                 }
@@ -255,7 +259,7 @@ export class ConstraintGroup {
                             from: cons.constraint.from,
                             to: cons.constraint.to,
                             type: cons.constraint.type,
-                            amount: cons.constraint.amount,
+                            operators: cons.constraint.operators,
                         });
                     }
                 }
@@ -280,8 +284,8 @@ export class ConstraintGroup {
             let value: number;
             if (!constraint.to) {
                 // TODO: check unit
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                value = constraint.amount!.value;
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-non-null-assertion
+                value = constraint.operators?.[0]!.value as number;
             } else {
                 const to = constraint.to;
                 switch (to.propertyType) {
@@ -304,7 +308,7 @@ export class ConstraintGroup {
                         value = to.object.y + to.object.height;
                         break;
                 }
-                if (constraint.amount) value += constraint.amount.value;
+                if (constraint.operators) value += constraint.operators[0].value;
             }
             if (constraint.from.propertyType === PropertyType.WIDTH) {
                 if (constraint.type === ConstraintType.EQUAL) {

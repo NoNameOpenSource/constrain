@@ -4,10 +4,13 @@ export interface Constraint {
     from: ConstraintTarget;
     to?: ConstraintTarget;
     type: ConstraintType;
-    amount?: {
-        value: number;
-        unit: Unit;
-    };
+    operators?: [
+        {
+            value: number;
+            unit: Unit;
+            operator: Operator;
+        }
+    ];
 }
 
 export enum ConstraintType {
@@ -24,4 +27,8 @@ export enum Unit {
     PERCENT = "%",
     EM = "em",
     REM = "rem",
+}
+
+export enum Operator {
+    ADD = "add",
 }

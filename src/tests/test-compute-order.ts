@@ -1,5 +1,5 @@
 import "source-map-support/register";
-import { Constraint, ConstraintType, Unit } from "../constraint";
+import { Constraint, ConstraintType, Operator, Unit } from "../constraint";
 import { DrawableObject } from "../drawable-object";
 import { ConstraintGroup } from "../layout-engine";
 import { PropertyType } from "../property-type";
@@ -13,7 +13,12 @@ class DrawableObjectMock implements DrawableObject {
     height: number;
 
     constructor() {
+        this.constraintGroup = new ConstraintGroup(this, []);
         this.children = [];
+        this.x = 0;
+        this.y = 0;
+        this.width = 0;
+        this.height = 0;
     }
 
     // eslint-disable-next-line class-methods-use-this
@@ -45,10 +50,13 @@ const constraints: Constraint[] = [
         },
         to: undefined,
         type: ConstraintType.EQUAL,
-        amount: {
-            value: TOP,
-            unit: Unit.PIXEL,
-        },
+        operators: [
+            {
+                value: TOP,
+                unit: Unit.PIXEL,
+                operator: Operator.ADD,
+            },
+        ],
     },
     {
         from: {
@@ -57,10 +65,13 @@ const constraints: Constraint[] = [
         },
         to: undefined,
         type: ConstraintType.EQUAL,
-        amount: {
-            value: LEFT,
-            unit: Unit.PIXEL,
-        },
+        operators: [
+            {
+                value: LEFT,
+                unit: Unit.PIXEL,
+                operator: Operator.ADD,
+            },
+        ],
     },
     {
         from: {
@@ -69,10 +80,13 @@ const constraints: Constraint[] = [
         },
         to: undefined,
         type: ConstraintType.EQUAL,
-        amount: {
-            value: WIDTH,
-            unit: Unit.PIXEL,
-        },
+        operators: [
+            {
+                value: WIDTH,
+                unit: Unit.PIXEL,
+                operator: Operator.ADD,
+            },
+        ],
     },
     {
         from: {
@@ -81,10 +95,13 @@ const constraints: Constraint[] = [
         },
         to: undefined,
         type: ConstraintType.EQUAL,
-        amount: {
-            value: HEIGHT,
-            unit: Unit.PIXEL,
-        },
+        operators: [
+            {
+                value: HEIGHT,
+                unit: Unit.PIXEL,
+                operator: Operator.ADD,
+            },
+        ],
     },
     {
         from: {
@@ -96,7 +113,7 @@ const constraints: Constraint[] = [
             propertyType: PropertyType.HEIGHT,
         },
         type: ConstraintType.EQUAL,
-        amount: undefined,
+        operators: undefined,
     },
     {
         from: {
@@ -108,7 +125,7 @@ const constraints: Constraint[] = [
             propertyType: PropertyType.WIDTH,
         },
         type: ConstraintType.EQUAL,
-        amount: undefined,
+        operators: undefined,
     },
     {
         from: {
@@ -120,10 +137,13 @@ const constraints: Constraint[] = [
             propertyType: PropertyType.RIGHT,
         },
         type: ConstraintType.EQUAL,
-        amount: {
-            value: HORIZONTAL_MARGIN,
-            unit: Unit.PIXEL,
-        },
+        operators: [
+            {
+                value: HORIZONTAL_MARGIN,
+                unit: Unit.PIXEL,
+                operator: Operator.ADD,
+            },
+        ],
     },
     {
         from: {
@@ -135,23 +155,23 @@ const constraints: Constraint[] = [
             propertyType: PropertyType.TOP,
         },
         type: ConstraintType.EQUAL,
-        amount: {
-            value: 0,
-            unit: Unit.PIXEL,
-        },
+        operators: [
+            {
+                value: 0,
+                unit: Unit.PIXEL,
+                operator: Operator.ADD,
+            },
+        ],
     },
 ];
+owner.constraintGroup.addConstraints(constraints);
 
-const constraintGroup = new ConstraintGroup([]);
-constraintGroup.owner = owner;
-constraintGroup.addConstraints(constraints);
-
-constraintGroup.computeOrder();
+owner.constraintGroup.computeOrder();
 
 // console.log(JSON.stringify(constraintGroup.constraintsInOrder, null, 2));
 // console.log("constraints in order length", constraintGroup.constraintsInOrder.length);
 
-constraintGroup.compute();
+owner.constraintGroup.compute();
 
 if (objects[0].x !== LEFT) {
     throw new Error("Object 0 x is incorrect");

@@ -6,7 +6,6 @@
         "esModuleInterop": true,
         "checkJs": false,
         "allowJs": false,
-        // TODO: turn this on eventually
         "strict": true,
         "useUnknownInCatchVariables": false,
         "outDir": "dist",
