@@ -19,6 +19,7 @@ export function compute(obj: DrawableObject) {
     // for (const constraint of obj.constraintGroup.constraintsInOrder) {
     // convert constraints to x, y, width, height for each child
     // const child = obj.children[constraint.from.object.id];
+
     // }
 
     for (const child of obj.children) {
