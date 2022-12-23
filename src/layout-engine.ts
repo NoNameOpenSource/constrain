@@ -1,6 +1,6 @@
-import { Constraint, ConstraintType } from "./constraint";
+import { Constraint, CONSTRAINT_TYPE } from "./constraint";
 import { DrawableObject } from "./drawable-object";
-import { PropertyType } from "./property-type";
+import { PropertyType, PROPERTY_TYPE } from "./property-type";
 
 export function compute(obj: DrawableObject) {
     if (obj.children.length < 1) {
@@ -289,73 +289,73 @@ export class ConstraintGroup {
             } else {
                 const to = constraint.to;
                 switch (to.propertyType) {
-                    case PropertyType.WIDTH:
+                    case PROPERTY_TYPE.WIDTH:
                         value = to.object.width;
                         break;
-                    case PropertyType.HEIGHT:
+                    case PROPERTY_TYPE.HEIGHT:
                         value = to.object.height;
                         break;
-                    case PropertyType.LEFT:
+                    case PROPERTY_TYPE.LEFT:
                         value = to.object.x;
                         break;
-                    case PropertyType.RIGHT:
+                    case PROPERTY_TYPE.RIGHT:
                         value = to.object.x + to.object.width;
                         break;
-                    case PropertyType.TOP:
+                    case PROPERTY_TYPE.TOP:
                         value = to.object.y;
                         break;
-                    case PropertyType.BOTTOM:
+                    case PROPERTY_TYPE.BOTTOM:
                         value = to.object.y + to.object.height;
                         break;
                 }
                 if (constraint.operators) value += constraint.operators[0].value;
             }
-            if (constraint.from.propertyType === PropertyType.WIDTH) {
-                if (constraint.type === ConstraintType.EQUAL) {
+            if (constraint.from.propertyType === PROPERTY_TYPE.WIDTH) {
+                if (constraint.type === CONSTRAINT_TYPE.EQUAL) {
                     obj.width = value;
-                } else if (constraint.type === ConstraintType.LTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.LTE) {
                     obj.width = Math.min(obj.width, value);
-                } else if (constraint.type === ConstraintType.GTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.GTE) {
                     obj.width = Math.max(obj.width, value);
                 }
-            } else if (constraint.from.propertyType === PropertyType.HEIGHT) {
-                if (constraint.type === ConstraintType.EQUAL) {
+            } else if (constraint.from.propertyType === PROPERTY_TYPE.HEIGHT) {
+                if (constraint.type === CONSTRAINT_TYPE.EQUAL) {
                     obj.height = value;
-                } else if (constraint.type === ConstraintType.LTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.LTE) {
                     obj.height = Math.min(obj.height, value);
-                } else if (constraint.type === ConstraintType.GTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.GTE) {
                     obj.height = Math.max(obj.height, value);
                 }
-            } else if (constraint.from.propertyType === PropertyType.LEFT) {
-                if (constraint.type === ConstraintType.EQUAL) {
+            } else if (constraint.from.propertyType === PROPERTY_TYPE.LEFT) {
+                if (constraint.type === CONSTRAINT_TYPE.EQUAL) {
                     obj.x = value;
-                } else if (constraint.type === ConstraintType.LTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.LTE) {
                     obj.x = Math.min(obj.x, value);
-                } else if (constraint.type === ConstraintType.GTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.GTE) {
                     obj.x = Math.max(obj.x, value);
                 }
-            } else if (constraint.from.propertyType === PropertyType.RIGHT) {
-                if (constraint.type === ConstraintType.EQUAL) {
+            } else if (constraint.from.propertyType === PROPERTY_TYPE.RIGHT) {
+                if (constraint.type === CONSTRAINT_TYPE.EQUAL) {
                     obj.width = value - obj.x;
-                } else if (constraint.type === ConstraintType.LTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.LTE) {
                     obj.width = Math.min(obj.width + obj.x, value) - obj.x;
-                } else if (constraint.type === ConstraintType.GTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.GTE) {
                     obj.width = Math.max(obj.width + obj.x, value) - obj.x;
                 }
-            } else if (constraint.from.propertyType === PropertyType.TOP) {
-                if (constraint.type === ConstraintType.EQUAL) {
+            } else if (constraint.from.propertyType === PROPERTY_TYPE.TOP) {
+                if (constraint.type === CONSTRAINT_TYPE.EQUAL) {
                     obj.y = value;
-                } else if (constraint.type === ConstraintType.LTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.LTE) {
                     obj.y = Math.min(obj.y, value);
-                } else if (constraint.type === ConstraintType.GTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.GTE) {
                     obj.y = Math.max(obj.y, value);
                 }
-            } else if (constraint.from.propertyType === PropertyType.BOTTOM) {
-                if (constraint.type === ConstraintType.EQUAL) {
+            } else if (constraint.from.propertyType === PROPERTY_TYPE.BOTTOM) {
+                if (constraint.type === CONSTRAINT_TYPE.EQUAL) {
                     obj.height = value - obj.y;
-                } else if (constraint.type === ConstraintType.LTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.LTE) {
                     obj.height = Math.min(obj.height + obj.y, value) - obj.x;
-                } else if (constraint.type === ConstraintType.GTE) {
+                } else if (constraint.type === CONSTRAINT_TYPE.GTE) {
                     obj.height = Math.max(obj.height + obj.y, value) - obj.x;
                 }
             }
@@ -375,9 +375,11 @@ interface PossiblyUsedConstraint {
 }
 
 function getXCoordTypes() {
-    return [PropertyType.LEFT, PropertyType.RIGHT, PropertyType.WIDTH];
+    const types: PropertyType[] = [PROPERTY_TYPE.LEFT, PROPERTY_TYPE.RIGHT, PROPERTY_TYPE.WIDTH];
+    return types;
 }
 
 function getYCoordTypes() {
-    return [PropertyType.TOP, PropertyType.BOTTOM, PropertyType.HEIGHT];
+    const types: PropertyType[] = [PROPERTY_TYPE.TOP, PROPERTY_TYPE.BOTTOM, PROPERTY_TYPE.HEIGHT];
+    return types;
 }

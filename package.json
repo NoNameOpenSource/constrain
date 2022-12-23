@@ -26,12 +26,13 @@
     "devDependencies": {
         "@nonameopensource/eslint-config-typescript": "^1.2.1",
         "@tsconfig/node16": "^1.0.2",
+        "@types/node": "^18.11.17",
         "eslint": "^8.13.0",
         "prettier": "^2.6.2",
         "source-map-support": "^0.5.21",
         "typescript": "^4.6.3"
     },
     "dependencies": {
-        "zod": "^3.17.10"
+        "zod": "^3.20.2"
     }
 }

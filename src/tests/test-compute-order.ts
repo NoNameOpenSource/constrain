@@ -1,10 +1,14 @@
+import fs from "fs";
+import path from "path";
 import "source-map-support/register";
-import { Constraint, ConstraintType, Operator, Unit } from "../constraint";
+import { Constraint, CONSTRAINT_TYPE, OPERATOR, UNIT } from "../constraint";
 import { DrawableObject } from "../drawable-object";
 import { ConstraintGroup } from "../layout-engine";
-import { PropertyType } from "../property-type";
+import { parse, serialize } from "../parser";
+import { PROPERTY_TYPE } from "../property-type";
 
 class DrawableObjectMock implements DrawableObject {
+    id: string;
     constraintGroup: ConstraintGroup;
     children: DrawableObject[];
     x: number;
@@ -12,7 +16,8 @@ class DrawableObjectMock implements DrawableObject {
     width: number;
     height: number;
 
-    constructor() {
+    constructor(id: string) {
+        this.id = id;
         this.constraintGroup = new ConstraintGroup(this, []);
         this.children = [];
         this.x = 0;
@@ -32,177 +37,201 @@ class DrawableObjectMock implements DrawableObject {
     }
 }
 
-const owner = new DrawableObjectMock();
-
-const objects: DrawableObject[] = [new DrawableObjectMock(), new DrawableObjectMock()];
-
-const TOP = 10;
-const LEFT = 20;
-const WIDTH = 100;
-const HEIGHT = 200;
-const HORIZONTAL_MARGIN = 50;
-
-const constraints: Constraint[] = [
-    {
-        from: {
-            object: objects[0],
-            propertyType: PropertyType.TOP,
-        },
-        to: undefined,
-        type: ConstraintType.EQUAL,
-        operators: [
-            {
-                value: TOP,
-                unit: Unit.PIXEL,
-                operator: Operator.ADD,
+function getConstraints(
+    objects: DrawableObject[],
+    dimensions: { top: number; left: number; width: number; height: number; horizontalMargin: number }
+) {
+    const constraints: Constraint[] = [
+        {
+            from: {
+                object: objects[0],
+                propertyType: PROPERTY_TYPE.TOP,
             },
-        ],
-    },
-    {
-        from: {
-            object: objects[0],
-            propertyType: PropertyType.LEFT,
+            to: undefined,
+            type: CONSTRAINT_TYPE.EQUAL,
+            operators: [
+                {
+                    value: dimensions.top,
+                    unit: UNIT.PIXEL,
+                    operator: OPERATOR.ADD,
+                },
+            ],
         },
-        to: undefined,
-        type: ConstraintType.EQUAL,
-        operators: [
-            {
-                value: LEFT,
-                unit: Unit.PIXEL,
-                operator: Operator.ADD,
+        {
+            from: {
+                object: objects[0],
+                propertyType: PROPERTY_TYPE.LEFT,
             },
-        ],
-    },
-    {
-        from: {
-            object: objects[0],
-            propertyType: PropertyType.WIDTH,
+            to: undefined,
+            type: CONSTRAINT_TYPE.EQUAL,
+            operators: [
+                {
+                    value: dimensions.left,
+                    unit: UNIT.PIXEL,
+                    operator: OPERATOR.ADD,
+                },
+            ],
         },
-        to: undefined,
-        type: ConstraintType.EQUAL,
-        operators: [
-            {
-                value: WIDTH,
-                unit: Unit.PIXEL,
-                operator: Operator.ADD,
+        {
+            from: {
+                object: objects[0],
+                propertyType: PROPERTY_TYPE.WIDTH,
             },
-        ],
-    },
-    {
-        from: {
-            object: objects[0],
-            propertyType: PropertyType.HEIGHT,
+            to: undefined,
+            type: CONSTRAINT_TYPE.EQUAL,
+            operators: [
+                {
+                    value: dimensions.width,
+                    unit: UNIT.PIXEL,
+                    operator: OPERATOR.ADD,
+                },
+            ],
         },
-        to: undefined,
-        type: ConstraintType.EQUAL,
-        operators: [
-            {
-                value: HEIGHT,
-                unit: Unit.PIXEL,
-                operator: Operator.ADD,
+        {
+            from: {
+                object: objects[0],
+                propertyType: PROPERTY_TYPE.HEIGHT,
             },
-        ],
-    },
-    {
-        from: {
-            object: objects[1],
-            propertyType: PropertyType.HEIGHT,
+            to: undefined,
+            type: CONSTRAINT_TYPE.EQUAL,
+            operators: [
+                {
+                    value: dimensions.height,
+                    unit: UNIT.PIXEL,
+                    operator: OPERATOR.ADD,
+                },
+            ],
         },
-        to: {
-            object: objects[0],
-            propertyType: PropertyType.HEIGHT,
-        },
-        type: ConstraintType.EQUAL,
-        operators: undefined,
-    },
-    {
-        from: {
-            object: objects[1],
-            propertyType: PropertyType.WIDTH,
-        },
-        to: {
-            object: objects[0],
-            propertyType: PropertyType.WIDTH,
-        },
-        type: ConstraintType.EQUAL,
-        operators: undefined,
-    },
-    {
-        from: {
-            object: objects[1],
-            propertyType: PropertyType.LEFT,
-        },
-        to: {
-            object: objects[0],
-            propertyType: PropertyType.RIGHT,
-        },
-        type: ConstraintType.EQUAL,
-        operators: [
-            {
-                value: HORIZONTAL_MARGIN,
-                unit: Unit.PIXEL,
-                operator: Operator.ADD,
+        {
+            from: {
+                object: objects[1],
+                propertyType: PROPERTY_TYPE.HEIGHT,
             },
-        ],
-    },
-    {
-        from: {
-            object: objects[1],
-            propertyType: PropertyType.TOP,
-        },
-        to: {
-            object: objects[0],
-            propertyType: PropertyType.TOP,
-        },
-        type: ConstraintType.EQUAL,
-        operators: [
-            {
-                value: 0,
-                unit: Unit.PIXEL,
-                operator: Operator.ADD,
+            to: {
+                object: objects[0],
+                propertyType: PROPERTY_TYPE.HEIGHT,
             },
-        ],
-    },
-];
-owner.constraintGroup.addConstraints(constraints);
+            type: CONSTRAINT_TYPE.EQUAL,
+            operators: undefined,
+        },
+        {
+            from: {
+                object: objects[1],
+                propertyType: PROPERTY_TYPE.WIDTH,
+            },
+            to: {
+                object: objects[0],
+                propertyType: PROPERTY_TYPE.WIDTH,
+            },
+            type: CONSTRAINT_TYPE.EQUAL,
+            operators: undefined,
+        },
+        {
+            from: {
+                object: objects[1],
+                propertyType: PROPERTY_TYPE.LEFT,
+            },
+            to: {
+                object: objects[0],
+                propertyType: PROPERTY_TYPE.RIGHT,
+            },
+            type: CONSTRAINT_TYPE.EQUAL,
+            operators: [
+                {
+                    value: dimensions.horizontalMargin,
+                    unit: UNIT.PIXEL,
+                    operator: OPERATOR.ADD,
+                },
+            ],
+        },
+        {
+            from: {
+                object: objects[1],
+                propertyType: PROPERTY_TYPE.TOP,
+            },
+            to: {
+                object: objects[0],
+                propertyType: PROPERTY_TYPE.TOP,
+            },
+            type: CONSTRAINT_TYPE.EQUAL,
+            operators: [
+                {
+                    value: 0,
+                    unit: UNIT.PIXEL,
+                    operator: OPERATOR.ADD,
+                },
+            ],
+        },
+    ];
 
-owner.constraintGroup.computeOrder();
-
-// console.log(JSON.stringify(constraintGroup.constraintsInOrder, null, 2));
-// console.log("constraints in order length", constraintGroup.constraintsInOrder.length);
-
-owner.constraintGroup.compute();
-
-if (objects[0].x !== LEFT) {
-    throw new Error("Object 0 x is incorrect");
+    return constraints;
 }
 
-if (objects[0].y !== TOP) {
-    throw new Error("Object 0 y is incorrect");
+async function main() {
+    const objects: DrawableObject[] = [new DrawableObjectMock("1"), new DrawableObjectMock("2")];
+
+    const dimensions = {
+        top: 10,
+        left: 20,
+        width: 100,
+        height: 200,
+        horizontalMargin: 50,
+    };
+    const constraints = getConstraints(objects, dimensions);
+
+    const filePath = path.join(__dirname, "./constraints.json");
+
+    const data = serialize(constraints);
+    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
+
+    const fileBuf = await fs.promises.readFile(path.join(filePath));
+    const fileData = JSON.parse(fileBuf.toString());
+    const parsedConstraints = parse(fileData, objects);
+
+    const owner = new DrawableObjectMock("owner");
+
+    owner.constraintGroup.addConstraints(parsedConstraints);
+
+    owner.constraintGroup.computeOrder();
+
+    // console.log(JSON.stringify(constraintGroup.constraintsInOrder, null, 2));
+    // console.log("constraints in order length", constraintGroup.constraintsInOrder.length);
+
+    owner.constraintGroup.compute();
+
+    if (objects[0].x !== dimensions.left) {
+        throw new Error("Object 0 x is incorrect");
+    }
+
+    if (objects[0].y !== dimensions.top) {
+        throw new Error("Object 0 y is incorrect");
+    }
+
+    if (objects[0].width !== dimensions.width) {
+        throw new Error("Object 0 width is incorrect");
+    }
+
+    if (objects[0].height !== dimensions.height) {
+        throw new Error("Object 0 height width is incorrect");
+    }
+
+    if (objects[1].width !== dimensions.width) {
+        throw new Error("Object 1 width is incorrect");
+    }
+
+    if (objects[1].height !== dimensions.height) {
+        throw new Error("Object 1 height width is incorrect");
+    }
+
+    if (objects[1].x !== dimensions.left + dimensions.width + dimensions.horizontalMargin) {
+        throw new Error("Object 1 x is incorrect");
+    }
+
+    if (objects[1].y !== dimensions.top) {
+        throw new Error("Object 1 y is incorrect");
+    }
+
+    console.log("All test passed!");
 }
 
-if (objects[0].width !== WIDTH) {
-    throw new Error("Object 0 width is incorrect");
-}
-
-if (objects[0].height !== HEIGHT) {
-    throw new Error("Object 0 height width is incorrect");
-}
-
-if (objects[1].width !== WIDTH) {
-    throw new Error("Object 1 width is incorrect");
-}
-
-if (objects[1].height !== HEIGHT) {
-    throw new Error("Object 1 height width is incorrect");
-}
-
-if (objects[1].x !== LEFT + WIDTH + HORIZONTAL_MARGIN) {
-    throw new Error("Object 1 x is incorrect");
-}
-
-if (objects[1].y !== TOP) {
-    throw new Error("Object 1 y is incorrect");
-}
-
-console.log("All test passed!");
+main().catch(console.error);
