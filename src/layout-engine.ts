@@ -1,6 +1,29 @@
-import { Constraint, ConstraintType } from "./constraint";
+import { Constraint } from "./constraint";
 import { DrawableObject } from "./drawable-object";
 import { PropertyType } from "./property-type";
+
+import * as kiwi from "@lume/kiwi";
+import { ConstraintObject } from "./constraint-object";
+import { Rect } from "./Rect";
+
+//const solver = new kiwi.Solver();
+
+// Create edit variables
+//const left = new kiwi.Variable();
+//const width = new kiwi.Variable();
+//solver.addEditVariable(left, kiwi.Strength.strong);
+//solver.addEditVariable(width, kiwi.Strength.strong);
+//solver.suggestValue(left, 100);
+//solver.suggestValue(width, 400);
+
+// Create and add a constraint
+const right = new kiwi.Variable();
+//solver.addConstraint(new kiwi.Constraint(new kiwi.Expression([-1, right], left, width), kiwi.Operator.Eq));
+
+// Solve the constraints
+//solver.updateVariables();
+
+console.assert(right.value() === 500);
 
 export function compute(obj: DrawableObject) {
     if (obj.children.length < 1) {
@@ -82,11 +105,11 @@ interface DrawableMock {
 // but now we are making simple program that will work
 
 export class ConstraintGroup {
-    owner: DrawableObject;
+    owner!: DrawableObject;
     constraints: Constraint[];
-    constraintsInOrder: Constraint[];
-    dirty: boolean;
-    tree: Node;
+    dirty!: boolean;
+    objects: ConstraintObject[] = [];
+    solver!: kiwi.Solver;
 
     constructor(constraints: Constraint[]) {
         this.constraints = constraints;
@@ -105,275 +128,149 @@ export class ConstraintGroup {
         this.computeOrder();
     }
 
+    getConstraintObject(drawableObject: DrawableObject): ConstraintObject {
+        const object = this.objects.find((object) => {
+            if (object.drawableObject === drawableObject) {
+                return true;
+            }
+            return false;
+        });
+
+        if (object) {
+            return object;
+        }
+
+        return this.addConstraintObject(drawableObject);
+    }
+
+    addConstraintObject(drawableObject: DrawableObject, strength?: number): ConstraintObject {
+        if (strength === undefined || strength === null) {
+            strength = kiwi.Strength.medium;
+        }
+
+        const object = new ConstraintObject(drawableObject);
+        this.solver.addEditVariable(object.kiwiRect.left, strength);
+        this.solver.addEditVariable(object.kiwiRect.right, strength);
+        this.solver.addEditVariable(object.kiwiRect.top, strength);
+        this.solver.addEditVariable(object.kiwiRect.bottom, strength);
+
+        this.objects.push(object);
+
+        return object;
+    }
+
+    getVariable(object: ConstraintObject, type: PropertyType): any {
+        if (object.drawableObject === this.owner) {
+            switch (type) {
+                case PropertyType.WIDTH:
+                    return object.kiwiRect.left;
+                case PropertyType.HEIGHT:
+                    return object.kiwiRect.bottom;
+            }
+        }
+
+        switch (type) {
+            case PropertyType.LEFT:
+                return object.kiwiRect.left;
+            case PropertyType.RIGHT:
+                return object.kiwiRect.right;
+            case PropertyType.TOP:
+                return object.kiwiRect.top;
+            case PropertyType.BOTTOM:
+                return object.kiwiRect.bottom;
+            case PropertyType.WIDTH:
+                //return new kiwi.Expression(object.kiwiRect.right, [-1, object.kiwiRect.left]);
+                return [object.kiwiRect.right, [-1, object.kiwiRect.left]];
+            case PropertyType.HEIGHT:
+                //return new kiwi.Expression(object.kiwiRect.bottom, [-1, object.kiwiRect.top]);
+                return [object.kiwiRect.bottom, [-1, object.kiwiRect.top]];
+        }
+    }
+
     computeOrder() {
         // generate the list of all objects that we are interacting with
 
+        // clean up first
+
+        this.objects = [];
+        this.solver = new kiwi.Solver();
+
         // temporarily add owner
-        const objs: DrawableObject[] = [this.owner];
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const ownerConstraintObject = this.addConstraintObject(this.owner, kiwi.Strength.required - 1);
 
         for (const constraint of this.constraints) {
-            if (objs.indexOf(constraint.from.object) === -1) {
-                objs.push(constraint.from.object);
-            }
-
-            if (!constraint.to) continue;
-
-            if (objs.indexOf(constraint.to.object) === -1) {
-                objs.push(constraint.to.object);
-            }
-        }
-
-        // remove owner
-        objs.splice(0, 1);
-
-        const constraints: PossiblyUsedConstraint[] = this.constraints.map((constraint) => ({
-            used: false,
-            constraint,
-        }));
-
-        /* not using this
-
-        const constraints: PossiblyUsedConstraint[] = [];
-
-        // for a constraint with a "to", create another constraint with the opposite direction
-        // because the direction does not matter in the input but it matters when computing
-
-        for (const constraint of this.constraints) {
-            constraints.push({
-                used: false,
-                constraint,
-            });
-            if (!constraint.to) continue;
-            constraints.push({
-                used: false,
-                constraint: {
-                    from: constraint.to,
-                    to: constraint.from,
-                    type: constraint.type,
-                    amount: constraint.amount,
-                },
-            });
-        }
-        */
-
-        // maintain function purity by creating an array of mocks with some extra properties
-
-        const mocks: DrawableMock[] = [];
-
-        for (const obj of objs) {
-            // find constraints for this obj
-            const constraintsWithObject = constraints.filter((constraint) => constraint.constraint.from.object === obj);
-
-            mocks.push({
-                x: false,
-                y: false,
-                constraints: constraintsWithObject,
-            });
-        }
-
-        // actually order the constraints
-
-        const constsInOrder: Constraint[] = [];
-
-        for (const _unused of mocks) {
-            for (const mock of mocks) {
-                // compute x coord
-
-                // check all the dependencies
-                let allClear = true;
-                for (const cons of mock.constraints) {
-                    if (!cons.constraint.to) continue;
-
-                    const xCoordTypes = getXCoordTypes();
-                    if (!xCoordTypes.includes(cons.constraint.from.propertyType)) continue;
-
-                    // check if there is a target
-                    if (!cons.constraint.to) continue;
-                    if (cons.constraint.to.object !== this.owner) continue;
-
-                    // find mock of the object because the constraint depends on the other element's property
-                    const dependsOnIndex = objs.indexOf(cons.constraint.to.object);
-                    const dependsOnMock = mocks[dependsOnIndex];
-                    if (!dependsOnMock.x) {
-                        // x coord of the dependence is not computed
-                        allClear = false;
-                        break;
-                    }
-                }
-
-                if (allClear && !mock.x) {
-                    //TODO:
-                    // check if we can compute this
-                    // or it is conflicting or ambiguous ( + need ordering)
-
-                    mock.x = true;
-                    for (const cons of mock.constraints) {
-                        // copy the constraints
-                        const xCoordTypes = getXCoordTypes();
-                        if (!xCoordTypes.includes(cons.constraint.from.propertyType)) continue;
-
-                        constsInOrder.push({
-                            from: cons.constraint.from,
-                            to: cons.constraint.to,
-                            type: cons.constraint.type,
-                            amount: cons.constraint.amount,
-                        });
-                    }
-                }
-
-                // compute y coord
-
-                // check all the dependencies
-                allClear = true;
-                for (const cons of mock.constraints) {
-                    if (!cons.constraint.to) continue;
-
-                    const yCoordTypes = getYCoordTypes();
-                    if (!yCoordTypes.includes(cons.constraint.from.propertyType)) continue;
-
-                    // find mock of the object
-                    const targetIndex = objs.indexOf(cons.constraint.to.object);
-                    const targetMock = mocks[targetIndex];
-                    if (!targetMock.y) {
-                        // y coord is not computed
-                        allClear = false;
-                        break;
-                    }
-                }
-
-                if (allClear && !mock.y) {
-                    //TODO:
-                    // check if we can compute this
-                    // or it is conflicting or ambiguous ( + need ordering)
-
-                    mock.y = true;
-                    for (const cons of mock.constraints) {
-                        const yCoordTypes = getYCoordTypes();
-                        if (!yCoordTypes.includes(cons.constraint.from.propertyType)) continue;
-                        // copy the constraints
-                        constsInOrder.push({
-                            from: cons.constraint.from,
-                            to: cons.constraint.to,
-                            type: cons.constraint.type,
-                            amount: cons.constraint.amount,
-                        });
-                    }
-                }
-            }
-        }
-
-        for (const mock of mocks) {
-            if (!mock.x || !mock.y) {
-                // error!
-                // something not computed
-                this.constraintsInOrder = [];
-                throw new Error("Bogus OO Error");
-            }
-        }
-
-        this.constraintsInOrder = constsInOrder;
-    }
-
-    compute() {
-        for (const constraint of this.constraints) {
-            const obj = constraint.from.object;
-            let value: number;
-            if (!constraint.to) {
-                // TODO: check unit
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                value = constraint.amount!.value;
+            const fromObject = this.getConstraintObject(constraint.from.object);
+            let expressions: any[] = [];
+            const varib = this.getVariable(fromObject, constraint.from.propertyType);
+            if (varib.value !== undefined) {
+                expressions.push(varib);
             } else {
-                const to = constraint.to;
-                switch (to.propertyType) {
-                    case PropertyType.WIDTH:
-                        value = to.object.width;
-                        break;
-                    case PropertyType.HEIGHT:
-                        value = to.object.height;
-                        break;
-                    case PropertyType.LEFT:
-                        value = to.object.x;
-                        break;
-                    case PropertyType.RIGHT:
-                        value = to.object.x + to.object.width;
-                        break;
-                    case PropertyType.TOP:
-                        value = to.object.y;
-                        break;
-                    case PropertyType.BOTTOM:
-                        value = to.object.y + to.object.height;
-                        break;
-                }
-                if (constraint.amount) value += constraint.amount.value;
+                expressions = expressions.concat(varib);
             }
-            if (constraint.from.propertyType === PropertyType.WIDTH) {
-                if (constraint.type === ConstraintType.EQUAL) {
-                    obj.width = value;
-                } else if (constraint.type === ConstraintType.LTE) {
-                    obj.width = Math.min(obj.width, value);
-                } else if (constraint.type === ConstraintType.GTE) {
-                    obj.width = Math.max(obj.width, value);
+            //expressions.push(this.getVariable(fromObject, constraint.from.propertyType));
+
+            if (constraint.to) {
+                const toObject = this.getConstraintObject(constraint.to.object);
+                const varia = this.getVariable(toObject, constraint.to.propertyType);
+                if (varia.value !== undefined) {
+                    expressions.push([-1, varia]);
+                } else {
+                    const expa: any[] = varia;
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                    expressions.push([-1, new kiwi.Expression(...expa)]);
                 }
-            } else if (constraint.from.propertyType === PropertyType.HEIGHT) {
-                if (constraint.type === ConstraintType.EQUAL) {
-                    obj.height = value;
-                } else if (constraint.type === ConstraintType.LTE) {
-                    obj.height = Math.min(obj.height, value);
-                } else if (constraint.type === ConstraintType.GTE) {
-                    obj.height = Math.max(obj.height, value);
-                }
-            } else if (constraint.from.propertyType === PropertyType.LEFT) {
-                if (constraint.type === ConstraintType.EQUAL) {
-                    obj.x = value;
-                } else if (constraint.type === ConstraintType.LTE) {
-                    obj.x = Math.min(obj.x, value);
-                } else if (constraint.type === ConstraintType.GTE) {
-                    obj.x = Math.max(obj.x, value);
-                }
-            } else if (constraint.from.propertyType === PropertyType.RIGHT) {
-                if (constraint.type === ConstraintType.EQUAL) {
-                    obj.width = value - obj.x;
-                } else if (constraint.type === ConstraintType.LTE) {
-                    obj.width = Math.min(obj.width + obj.x, value) - obj.x;
-                } else if (constraint.type === ConstraintType.GTE) {
-                    obj.width = Math.max(obj.width + obj.x, value) - obj.x;
-                }
-            } else if (constraint.from.propertyType === PropertyType.TOP) {
-                if (constraint.type === ConstraintType.EQUAL) {
-                    obj.y = value;
-                } else if (constraint.type === ConstraintType.LTE) {
-                    obj.y = Math.min(obj.y, value);
-                } else if (constraint.type === ConstraintType.GTE) {
-                    obj.y = Math.max(obj.y, value);
-                }
-            } else if (constraint.from.propertyType === PropertyType.BOTTOM) {
-                if (constraint.type === ConstraintType.EQUAL) {
-                    obj.height = value - obj.y;
-                } else if (constraint.type === ConstraintType.LTE) {
-                    obj.height = Math.min(obj.height + obj.y, value) - obj.x;
-                } else if (constraint.type === ConstraintType.GTE) {
-                    obj.height = Math.max(obj.height + obj.y, value) - obj.x;
-                }
+                //expressions.push([-1, this.getVariable(toObject, constraint.to.propertyType)]);
+            }
+
+            if (constraint.amount) {
+                //TODO: use unit of the constraint
+                expressions.push(-1 * constraint.amount.value);
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            const expression = new kiwi.Expression(...expressions);
+            console.log(JSON.stringify(expressions));
+            this.solver.addConstraint(new kiwi.Constraint(expression, kiwi.Operator.Eq));
+        }
+        console.log("\n\n\n\n");
+    }
+
+    compute(rect: Rect) {
+        const ownerConstraintObject = this.objects[0];
+        this.solver.suggestValue(ownerConstraintObject.kiwiRect.top, 0);
+        this.solver.suggestValue(ownerConstraintObject.kiwiRect.right, rect.width);
+        this.solver.suggestValue(ownerConstraintObject.kiwiRect.bottom, rect.height);
+        this.solver.suggestValue(ownerConstraintObject.kiwiRect.left, 0);
+
+        for (const object of this.objects) {
+            if (object.frame.left !== object.kiwiRect.left.value()) {
+                this.solver.suggestValue(object.kiwiRect.left, object.frame.left);
+            }
+            if (object.frame.right !== object.kiwiRect.right.value()) {
+                this.solver.suggestValue(object.kiwiRect.right, object.frame.right);
+            }
+            if (object.frame.top !== object.kiwiRect.top.value()) {
+                this.solver.suggestValue(object.kiwiRect.top, object.frame.top);
+            }
+            if (object.frame.bottom !== object.kiwiRect.bottom.value()) {
+                this.solver.suggestValue(object.kiwiRect.bottom, object.frame.bottom);
             }
         }
-    }
-}
 
-interface Node {
-    self: Constraint;
-    one: Node;
-    two: Node;
+        this.solver.updateVariables();
+        this.updateObjects();
+    }
+
+    updateObjects() {
+        for (const object of this.objects) {
+            object.update();
+            console.log(object.frame);
+        }
+    }
 }
 
 interface PossiblyUsedConstraint {
     used: boolean;
     constraint: Constraint;
-}
-
-function getXCoordTypes() {
-    return [PropertyType.LEFT, PropertyType.RIGHT, PropertyType.WIDTH];
-}
-
-function getYCoordTypes() {
-    return [PropertyType.TOP, PropertyType.BOTTOM, PropertyType.HEIGHT];
 }

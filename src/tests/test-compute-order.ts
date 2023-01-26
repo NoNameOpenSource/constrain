@@ -3,18 +3,20 @@ import { Constraint, ConstraintType, Unit } from "../constraint";
 import { DrawableObject } from "../drawable-object";
 import { ConstraintGroup } from "../layout-engine";
 import { PropertyType } from "../property-type";
+import { Rect } from "../Rect";
 
 class DrawableObjectMock implements DrawableObject {
-    constraintGroup: ConstraintGroup;
+    constraintGroup!: ConstraintGroup;
     children: DrawableObject[];
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+    x!: number;
+    y!: number;
+    width!: number;
+    height!: number;
 
     constructor() {
         this.children = [];
     }
+    rect: Rect = new Rect(0, 0, 10, 10);
 
     // eslint-disable-next-line class-methods-use-this
     update() {
@@ -28,8 +30,30 @@ class DrawableObjectMock implements DrawableObject {
 }
 
 const owner = new DrawableObjectMock();
+owner.x = 0;
+owner.y = 0;
+owner.width = 500;
+owner.height = 500;
 
 const objects: DrawableObject[] = [new DrawableObjectMock(), new DrawableObjectMock()];
+/*
+objects[0].x = 0;
+objects[0].y = 0;
+objects[0].width = 500;
+objects[0].height = 500;
+objects[1].x = 0;
+objects[1].y = 0;
+objects[1].width = 500;
+objects[1].height = 500;
+*/
+objects[0].x = 10;
+objects[0].y = 20;
+objects[0].width = 100;
+objects[0].height = 200;
+objects[1].x = 0;
+objects[1].y = 0;
+objects[1].width = 100;
+objects[1].height = 200;
 
 const TOP = 10;
 const LEFT = 20;
@@ -43,7 +67,10 @@ const constraints: Constraint[] = [
             object: objects[0],
             propertyType: PropertyType.TOP,
         },
-        to: undefined,
+        to: {
+            object: owner,
+            propertyType: PropertyType.TOP,
+        },
         type: ConstraintType.EQUAL,
         amount: {
             value: TOP,
@@ -55,7 +82,10 @@ const constraints: Constraint[] = [
             object: objects[0],
             propertyType: PropertyType.LEFT,
         },
-        to: undefined,
+        to: {
+            object: owner,
+            propertyType: PropertyType.LEFT,
+        },
         type: ConstraintType.EQUAL,
         amount: {
             value: LEFT,
@@ -151,9 +181,10 @@ constraintGroup.computeOrder();
 // console.log(JSON.stringify(constraintGroup.constraintsInOrder, null, 2));
 // console.log("constraints in order length", constraintGroup.constraintsInOrder.length);
 
-constraintGroup.compute();
+constraintGroup.compute(new Rect(0, 0, 100, 100));
 
 if (objects[0].x !== LEFT) {
+    console.log(objects[0].x);
     throw new Error("Object 0 x is incorrect");
 }
 
